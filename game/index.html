@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAILWIND EXPRESS — Bush-Plane Cargo Courier</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1220;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #hud { position: fixed; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  /* Read aloud, never shown: the status line screen readers announce. */
+  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .panel { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(6, 12, 24, 0.55); backdrop-filter: blur(2px); z-index: 5; }
+  .panel[hidden] { display: none; }
+  .card { width: min(880px, 94vw); max-height: 92vh; overflow: auto; background: #0e1a2e;
+    border: 1px solid #2b4a6f; border-radius: 14px; padding: 22px 26px; color: #e8f1fb;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6); }
+  .card h1 { margin: 0 0 2px; font-size: 44px; letter-spacing: 2px; color: #ffd166; }
+  .card h1 .tail { color: #7fd4ff; }
+  .card h2 { margin: 0 0 10px; font-size: 26px; color: #ffd166; letter-spacing: 1px; }
+  .sub { color: #9fc3e8; margin: 0 0 16px; font-size: 15px; line-height: 1.45; }
+  .sub b { color: #ffd166; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin: 12px 0; }
+  .pick { text-align: left; background: #13263f; border: 1px solid #2b4a6f; color: #e8f1fb;
+    border-radius: 10px; padding: 12px 14px; cursor: pointer; font-size: 14px; line-height: 1.45; }
+  .pick:hover, .pick:focus-visible { border-color: #ffd166; outline: none; background: #1a324f; }
+  .pick .name { font-weight: 700; font-size: 16px; color: #fff; }
+  .pick .meta { color: #9fc3e8; font-size: 13px; }
+  .pick .tag { display: inline-block; background: #ffd166; color: #231a00; font-weight: 700;
+    font-size: 11px; border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
+  .pick.locked { opacity: 0.45; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  button.btn { background: #ffd166; color: #231a00; border: 0; border-radius: 9px; padding: 11px 18px;
+    font-weight: 700; font-size: 15px; cursor: pointer; }
+  button.btn:hover { background: #ffdb85; }
+  button.btn.ghost { background: transparent; color: #9fc3e8; border: 1px solid #2b4a6f; }
+  button.btn.ghost:hover { border-color: #ffd166; color: #ffd166; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px; margin: 10px 0; }
+  .keys kbd { background: #13263f; border: 1px solid #2b4a6f; border-radius: 5px; padding: 1px 8px;
+    font-family: inherit; font-weight: 700; color: #ffd166; white-space: nowrap; }
+  .result { font-size: 17px; line-height: 1.6; }
+  .result .grade { font-size: 52px; font-weight: 800; color: #ffd166; line-height: 1; }
+  .result .good { color: #7be495; } .result .bad { color: #ff8a7a; }
+  .tiny { font-size: 12px; color: #6f8fb5; margin-top: 14px; }
+  .aircraft-stats { display: flex; gap: 8px; margin-top: 8px; }
+  .aircraft-stats span { background: #0e1a2e; border: 1px solid #2b4a6f; border-radius: 6px;
+    padding: 3px 8px; font-size: 12px; color: #9fc3e8; }
+  .aircraft-stats b { color: #fff; }
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="Tailwind Express: fly cargo between island airfields"></canvas>
+<canvas id="hud" aria-hidden="true"></canvas>
+<p id="status" role="status" aria-live="polite"></p>
+
+<!-- Title -->
+<div class="panel" id="screen-title">
+  <div class="card">
+    <h1>TAILWIND <span class="tail">EXPRESS</span></h1>
+    <p class="sub">Bush-plane cargo courier. Fly <b>6 cargo routes</b> across <b>7 named airfields</b>
+      on one island — coast, lake, desert, city, pine forest and glacier — in <b>3 aircraft</b>
+      (Cub, Otter, Falcon), through <b>31 checkpoint rings</b>, in <b>day, dusk and night</b> light,
+      with wind, gusts and fuel to manage. Land smooth, land on time, keep the mail dry.</p>
+    <div class="row">
+      <button class="btn" id="btn-career">Career — 6 Routes</button>
+      <button class="btn ghost" id="btn-free">Free Flight</button>
+      <button class="btn ghost" id="btn-trial">Time Trial</button>
+      <button class="btn ghost" id="btn-how">How to Fly</button>
+    </div>
+    <p class="tiny">Keyboard + mouse. No network, no downloads — everything runs from this page.
+      Best times are saved on this computer only.</p>
+  </div>
+</div>
+
+<!-- Aircraft select -->
+<div class="panel" id="screen-aircraft" hidden>
+  <div class="card">
+    <h2>Choose your aircraft</h2>
+    <p class="sub">Each one flies differently. The Cub lands on a postage stamp; the Falcon needs
+      every metre of runway Harbor City can give it.</p>
+    <div class="grid" id="aircraft-list"></div>
+    <div class="row"><button class="btn ghost" id="btn-aircraft-back">Back</button></div>
+  </div>
+</div>
+
+<!-- Route select -->
+<div class="panel" id="screen-routes" hidden>
+  <div class="card">
+    <h2 id="routes-heading">Choose a route</h2>
+    <p class="sub" id="routes-sub"></p>
+    <div class="grid" id="route-list"></div>
+    <div class="row"><button class="btn ghost" id="btn-routes-back">Back</button></div>
+  </div>
+</div>
+
+<!-- Free flight select -->
+<div class="panel" id="screen-free" hidden>
+  <div class="card">
+    <h2>Free Flight — pick a departure airfield</h2>
+    <p class="sub">No rings, no timer, no cargo. Just you, the island and a full tank.
+      Land at any airfield to see your landing score.</p>
+    <div class="grid" id="free-list"></div>
+    <div class="row"><button class="btn ghost" id="btn-free-back">Back</button></div>
+  </div>
+</div>
+
+<!-- How to fly -->
+<div class="panel" id="screen-how" hidden>
+  <div class="card">
+    <h2>How to Fly</h2>
+    <div class="keys">
+      <kbd>W / S</kbd><span>Throttle up / down (Shift = full, Ctrl = idle)</span>
+      <kbd>&uarr; / &darr;</kbd><span>Pitch — nose down / nose up (elevator)</span>
+      <kbd>&larr; / &rarr;</kbd><span>Roll — bank left / right (turns follow the bank)</span>
+      <kbd>F</kbd><span>Flaps — slower stall, more drag (use on final)</span>
+      <kbd>G</kbd><span>Landing gear up / down</span>
+      <kbd>B</kbd><span>Wheel brake (hold on the runway)</span>
+      <kbd>C</kbd><span>Camera — chase / near / cockpit-nose</span>
+      <kbd>Mouse drag</kbd><span>Orbit the chase camera</span>
+      <kbd>P / Esc</kbd><span>Pause</span>
+      <kbd>M</kbd><span>Mute sound</span>
+      <kbd>R</kbd><span>Restart the route</span>
+    </div>
+    <p class="sub">Take off into the wind, fly through every ring, and land on the destination
+      strip: slow, on centreline, gentle on the wheels. A smooth touchdown beats a fast one —
+      your score is time + landing smoothness + fuel left. Watch the stall speed: below it the
+      nose drops and the wings stop answering.</p>
+    <div class="row"><button class="btn" id="btn-how-close">Got it</button></div>
+  </div>
+</div>
+
+<!-- Pause -->
+<div class="panel" id="screen-pause" hidden>
+  <div class="card">
+    <h2>Paused</h2>
+    <p class="sub" id="pause-info"></p>
+    <div class="row">
+      <button class="btn" id="btn-resume">Resume</button>
+      <button class="btn ghost" id="btn-restart">Restart route</button>
+      <button class="btn ghost" id="btn-quit">Quit to title</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result -->
+<div class="panel" id="screen-result" hidden>
+  <div class="card">
+    <h2 id="result-title">Landed</h2>
+    <div class="result" id="result-body"></div>
+    <div class="row">
+      <button class="btn" id="btn-again">Fly it again</button>
+      <button class="btn ghost" id="btn-next">Next route</button>
+      <button class="btn ghost" id="btn-result-title">Title screen</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
