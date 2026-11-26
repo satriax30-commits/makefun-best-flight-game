@@ -1,8 +1,8 @@
 # TAILWIND EXPRESS — fly 6 cargo routes across 7 named airfields, 3 aircraft, rings, weather, day/dusk/night, scored landings
 
 [![make.fun](https://make.fun/badge/best-flight-game-20261126-0057.svg)](https://make.fun/c/best-flight-game-20261126-0057)
-[![rank](https://make.fun/badge/best-flight-game-20261126-0057/satriax30-commits/makefun-flight-game/rank.svg)](https://make.fun/c/best-flight-game-20261126-0057)
-[![reward](https://make.fun/badge/best-flight-game-20261126-0057/satriax30-commits/makefun-flight-game/reward.svg)](https://make.fun/c/best-flight-game-20261126-0057)
+[![rank](https://make.fun/badge/best-flight-game-20261126-0057/satriax30-commits/makefun-best-flight-game/rank.svg)](https://make.fun/c/best-flight-game-20261126-0057)
+[![reward](https://make.fun/badge/best-flight-game-20261126-0057/satriax30-commits/makefun-best-flight-game/reward.svg)](https://make.fun/c/best-flight-game-20261126-0057)
 
 A bush-plane cargo courier in the browser. Fly **6 cargo routes** across **7 named
 airfields** — Coral Coast, Lakeview, Pine Ridge, Glacier Pass, Desert Strip, Harbor City,
